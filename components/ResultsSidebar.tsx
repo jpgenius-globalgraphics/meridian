@@ -43,7 +43,7 @@ const CountyCard = memo(function CountyCard({
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:shadow-glow transition-all p-4"
+      className="w-full text-left rounded-md border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-primary/40 transition-colors p-4"
     >
       <div className="flex items-start gap-3">
         <div className="text-primary font-bold text-2xl leading-none w-8 shrink-0">
@@ -118,7 +118,7 @@ export default function ResultsSidebar({
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 400, opacity: 0 }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="fixed top-24 right-4 bottom-4 w-[380px] z-20 rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-md shadow-glow flex flex-col"
+          className="fixed top-24 right-4 bottom-4 w-[380px] z-20 rounded-lg border border-white/10 bg-bg/95 flex flex-col"
         >
           <div className="flex items-start justify-between p-5 border-b border-white/10">
             <div>

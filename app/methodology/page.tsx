@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Methodology — Meridian',
+  title: 'Methodology — Altus Index',
 };
 
 export default function MethodologyPage() {

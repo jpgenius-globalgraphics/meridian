@@ -25,6 +25,8 @@ export type RiskTolerance = 'Low' | 'Medium' | 'High';
 
 export type FitLabel = 'Strong Match' | 'Good Fit' | 'Consider' | 'Poor Fit';
 
+export type DataQuality = 'real' | 'estimated';
+
 export interface CountyData {
   fips: string;
   name: string;
@@ -41,6 +43,12 @@ export interface CountyData {
   employmentScore: number;
   costOfLivingScore: number;
   whyDescription: string;
+  // Optional richer fields populated by the data pipeline
+  medianRent?: number;
+  povertyRate?: number;
+  bachelorsRate?: number;
+  medianAge?: number;
+  dataQuality?: DataQuality;
 }
 
 export interface UserProfile {

@@ -52,7 +52,7 @@ export default function CountyDetail({ county, onClose }: CountyDetailProps) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="fixed bottom-0 left-0 right-0 z-20 h-[40vh] rounded-t-2xl border-t border-white/10 bg-white/[0.05] backdrop-blur-md shadow-glow flex"
+          className="fixed bottom-0 left-0 right-0 z-20 h-[40vh] rounded-t-lg border-t border-white/10 bg-bg/95 flex"
         >
           {/* Left: identity & headline score */}
           <div className="p-6 w-[280px] shrink-0 border-r border-white/10 flex flex-col justify-between">
@@ -60,13 +60,29 @@ export default function CountyDetail({ county, onClose }: CountyDetailProps) {
               <div className="text-text text-xl font-bold leading-tight">
                 {county.name}, {county.state}
               </div>
-              <span
-                className={`inline-block mt-2 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                  FIT_BADGE_STYLE[county.fitLabel] ?? FIT_BADGE_STYLE.Consider
-                }`}
-              >
-                {county.fitLabel}
-              </span>
+              <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+                <span
+                  className={`inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                    FIT_BADGE_STYLE[county.fitLabel] ?? FIT_BADGE_STYLE.Consider
+                  }`}
+                >
+                  {county.fitLabel}
+                </span>
+                <span
+                  className={`inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                    county.dataQuality === 'real'
+                      ? 'bg-primary/10 text-primary border-primary/30'
+                      : 'bg-white/[0.04] text-muted border-white/10'
+                  }`}
+                  title={
+                    county.dataQuality === 'real'
+                      ? 'Sourced from Census/BLS/Opportunity Atlas'
+                      : 'Derived from curated estimates'
+                  }
+                >
+                  {county.dataQuality === 'real' ? 'Real data' : 'Estimated'}
+                </span>
+              </div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-widest text-muted">

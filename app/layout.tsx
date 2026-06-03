@@ -9,9 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Meridian — Where to build wealth',
+  title: 'Altus Index — Find your path to success',
   description:
-    'A personalized economic opportunity map for young people deciding where to move to build wealth.',
+    'A personalized economic opportunity map of the United States. Find where to move to build wealth.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

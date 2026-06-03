@@ -22,6 +22,14 @@ yarn-error.log*
 # cloudflare
 .wrangler
 
+# pipeline raw data (~150 MB Opportunity Atlas CSV + intermediate JSON)
+data/raw/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
 # misc
 .DS_Store
 *.pem

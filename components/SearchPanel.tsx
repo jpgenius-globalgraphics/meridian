@@ -39,15 +39,15 @@ function Pill<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-1">
+    <div className="inline-flex rounded-md border border-white/10 bg-bg p-0.5">
       {options.map((o) => (
         <button
           key={o}
           type="button"
           onClick={() => onChange(o)}
-          className={`px-3 py-1 text-xs rounded-full transition-colors ${
+          className={`px-3 py-1 text-xs rounded transition-colors ${
             value === o
-              ? 'bg-primary text-bg font-semibold shadow-glow'
+              ? 'bg-primary text-bg font-semibold'
               : 'text-muted hover:text-text'
           }`}
         >
@@ -70,23 +70,34 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export default function SearchPanel({ profile, onSubmit }: SearchPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState<UserProfile>(profile);
+  const [ageText, setAgeText] = useState(String(profile.age));
+
+  const commitAge = () => {
+    const parsed = parseInt(ageText, 10);
+    if (Number.isFinite(parsed)) {
+      const bounded = Math.max(18, Math.min(65, parsed));
+      setDraft({ ...draft, age: bounded });
+      setAgeText(String(bounded));
+    } else {
+      setAgeText(String(draft.age));
+    }
+  };
 
   return (
     <div className="fixed top-4 left-4 right-4 z-30">
-      <div className="rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-md shadow-glow">
+      <div className="rounded-lg border border-white/10 bg-bg/95">
         {/* Header row */}
         <div className="flex items-center justify-between px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-md bg-gradient-to-br from-primary to-secondary shadow-glow" />
-            <div className="font-bold text-text tracking-tight text-lg">Meridian</div>
-          </div>
-          <div className="hidden md:block text-muted text-sm italic">
-            Where should you build wealth?
+          <div className="flex items-baseline gap-3">
+            <div className="font-bold text-text tracking-tight text-lg">Altus Index</div>
+            <div className="hidden lg:block text-muted text-xs">
+              Find your path to success
+            </div>
           </div>
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="px-4 py-2 text-sm rounded-lg border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+            className="px-4 py-2 text-sm rounded-md border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
           >
             {expanded ? 'Collapse' : 'Personalize'}
           </button>
@@ -100,27 +111,32 @@ export default function SearchPanel({ profile, onSubmit }: SearchPanelProps) {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="overflow-hidden"
+              className="overflow-hidden border-t border-white/10"
             >
-              <div className="px-5 pb-5 pt-1">
+              <div className="px-5 py-4">
                 <div className="flex flex-wrap items-end gap-4">
                   <Field label="Age">
                     <input
-                      type="number"
-                      min={18}
-                      max={65}
-                      value={draft.age}
-                      onChange={(e) =>
-                        setDraft({ ...draft, age: Math.max(18, Math.min(65, Number(e.target.value) || 18)) })
-                      }
-                      className="w-20 bg-white/[0.04] border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={ageText}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/[^0-9]/g, '');
+                        setAgeText(v);
+                      }}
+                      onBlur={commitAge}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                      }}
+                      className="w-20 bg-bg border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
                     />
                   </Field>
                   <Field label="Degree">
                     <select
                       value={draft.degree}
                       onChange={(e) => setDraft({ ...draft, degree: e.target.value as DegreeLevel })}
-                      className="bg-white/[0.04] border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
+                      className="bg-bg border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
                     >
                       {DEGREES.map((d) => (
                         <option key={d} value={d} className="bg-bg">
@@ -133,7 +149,7 @@ export default function SearchPanel({ profile, onSubmit }: SearchPanelProps) {
                     <select
                       value={draft.career}
                       onChange={(e) => setDraft({ ...draft, career: e.target.value as CareerField })}
-                      className="bg-white/[0.04] border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
+                      className="bg-bg border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
                     >
                       {CAREERS.map((c) => (
                         <option key={c} value={c} className="bg-bg">
@@ -148,7 +164,7 @@ export default function SearchPanel({ profile, onSubmit }: SearchPanelProps) {
                       onChange={(e) =>
                         setDraft({ ...draft, salaryGoal: e.target.value as SalaryGoal })
                       }
-                      className="bg-white/[0.04] border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
+                      className="bg-bg border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
                     >
                       {SALARY_GOALS.map((s) => (
                         <option key={s} value={s} className="bg-bg">
@@ -180,8 +196,11 @@ export default function SearchPanel({ profile, onSubmit }: SearchPanelProps) {
                   </Field>
                   <button
                     type="button"
-                    onClick={() => onSubmit(draft)}
-                    className="ml-auto px-5 py-2.5 rounded-lg bg-primary text-bg font-semibold text-sm shadow-glow hover:shadow-glow-lg transition-shadow"
+                    onClick={() => {
+                      commitAge();
+                      onSubmit({ ...draft, age: draft.age });
+                    }}
+                    className="ml-auto px-5 py-2.5 rounded-md bg-primary text-bg font-semibold text-sm hover:bg-primary/90 transition-colors"
                   >
                     Find My Best Places →
                   </button>
