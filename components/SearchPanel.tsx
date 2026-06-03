@@ -1,0 +1,196 @@
+'use client';
+
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import type {
+  CareerField,
+  DegreeLevel,
+  RiskTolerance,
+  SalaryGoal,
+  UserProfile,
+  YesNo,
+} from '@/lib/data/types';
+
+interface SearchPanelProps {
+  profile: UserProfile;
+  onSubmit: (profile: UserProfile) => void;
+}
+
+const DEGREES: DegreeLevel[] = ['High School', 'Associate', "Bachelor's", "Master's", 'PhD'];
+const CAREERS: CareerField[] = [
+  'Finance & IB',
+  'Technology',
+  'Healthcare',
+  'Law',
+  'Engineering',
+  'Education',
+  'Other',
+];
+const SALARY_GOALS: SalaryGoal[] = ['Under $50k', '$50-80k', '$80-120k', '$120k+'];
+const RISK: RiskTolerance[] = ['Low', 'Medium', 'High'];
+
+function Pill<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: T[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-1">
+      {options.map((o) => (
+        <button
+          key={o}
+          type="button"
+          onClick={() => onChange(o)}
+          className={`px-3 py-1 text-xs rounded-full transition-colors ${
+            value === o
+              ? 'bg-primary text-bg font-semibold shadow-glow'
+              : 'text-muted hover:text-text'
+          }`}
+        >
+          {o}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 min-w-[120px]">
+      <label className="text-[10px] uppercase tracking-widest text-muted">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+export default function SearchPanel({ profile, onSubmit }: SearchPanelProps) {
+  const [expanded, setExpanded] = useState(false);
+  const [draft, setDraft] = useState<UserProfile>(profile);
+
+  return (
+    <div className="fixed top-4 left-4 right-4 z-30">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-md shadow-glow">
+        {/* Header row */}
+        <div className="flex items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-md bg-gradient-to-br from-primary to-secondary shadow-glow" />
+            <div className="font-bold text-text tracking-tight text-lg">Meridian</div>
+          </div>
+          <div className="hidden md:block text-muted text-sm italic">
+            Where should you build wealth?
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="px-4 py-2 text-sm rounded-lg border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+          >
+            {expanded ? 'Collapse' : 'Personalize'}
+          </button>
+        </div>
+
+        <AnimatePresence initial={false}>
+          {expanded && (
+            <motion.div
+              key="expanded"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="overflow-hidden"
+            >
+              <div className="px-5 pb-5 pt-1">
+                <div className="flex flex-wrap items-end gap-4">
+                  <Field label="Age">
+                    <input
+                      type="number"
+                      min={18}
+                      max={65}
+                      value={draft.age}
+                      onChange={(e) =>
+                        setDraft({ ...draft, age: Math.max(18, Math.min(65, Number(e.target.value) || 18)) })
+                      }
+                      className="w-20 bg-white/[0.04] border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
+                    />
+                  </Field>
+                  <Field label="Degree">
+                    <select
+                      value={draft.degree}
+                      onChange={(e) => setDraft({ ...draft, degree: e.target.value as DegreeLevel })}
+                      className="bg-white/[0.04] border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
+                    >
+                      {DEGREES.map((d) => (
+                        <option key={d} value={d} className="bg-bg">
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Career">
+                    <select
+                      value={draft.career}
+                      onChange={(e) => setDraft({ ...draft, career: e.target.value as CareerField })}
+                      className="bg-white/[0.04] border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
+                    >
+                      {CAREERS.map((c) => (
+                        <option key={c} value={c} className="bg-bg">
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Salary Goal">
+                    <select
+                      value={draft.salaryGoal}
+                      onChange={(e) =>
+                        setDraft({ ...draft, salaryGoal: e.target.value as SalaryGoal })
+                      }
+                      className="bg-white/[0.04] border border-white/10 rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary/50"
+                    >
+                      {SALARY_GOALS.map((s) => (
+                        <option key={s} value={s} className="bg-bg">
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Remote">
+                    <Pill<YesNo>
+                      options={['Yes', 'No']}
+                      value={draft.remoteWork}
+                      onChange={(v) => setDraft({ ...draft, remoteWork: v })}
+                    />
+                  </Field>
+                  <Field label="Own Home">
+                    <Pill<YesNo>
+                      options={['Yes', 'No']}
+                      value={draft.ownHome}
+                      onChange={(v) => setDraft({ ...draft, ownHome: v })}
+                    />
+                  </Field>
+                  <Field label="Risk">
+                    <Pill<RiskTolerance>
+                      options={RISK}
+                      value={draft.riskTolerance}
+                      onChange={(v) => setDraft({ ...draft, riskTolerance: v })}
+                    />
+                  </Field>
+                  <button
+                    type="button"
+                    onClick={() => onSubmit(draft)}
+                    className="ml-auto px-5 py-2.5 rounded-lg bg-primary text-bg font-semibold text-sm shadow-glow hover:shadow-glow-lg transition-shadow"
+                  >
+                    Find My Best Places →
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
