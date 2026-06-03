@@ -45,9 +45,12 @@ imports directly.
 
 - **US Census Bureau ACS 5-year** — median income, home value, rent,
   education, poverty, population, age.
-- **Bureau of Labor Statistics LAUS** — county unemployment rates.
 - **Opportunity Atlas (Chetty et al.)** — tract-level economic mobility,
   aggregated to county.
+
+Unemployment is derived directly from ACS (`B23025_005E / B23025_003E`); the
+optional BLS LAUS fetcher remains in the repo but is no longer part of the
+default pipeline (its public-tier API is unreliable for large pulls).
 
 ### Run it
 
@@ -60,7 +63,6 @@ export CENSUS_API_KEY=your_key_here
 
 # 3. Fetch each source (each writes to data/raw/)
 python3 scripts/fetch_census.py        # ~1 minute, 50 state requests
-python3 scripts/fetch_bls.py           # several minutes — public-tier rate limited
 python3 scripts/fetch_opportunity.py   # downloads a ~150 MB CSV once, then aggregates
 
 # 4. Build the final county DB consumed by the Next.js app
@@ -72,9 +74,9 @@ npm run dev
 
 `scripts/build_database.py` writes:
 
-- `data/counties_generated.json` — the top 800 counties by population with
-  full dimension scores and metadata. Imported directly by
-  `lib/data/counties.ts`.
+- `data/counties_generated.json` — every US county that has Census data
+  (~3,143 counties) with full dimension scores and metadata. Imported
+  directly by `lib/data/counties.ts`.
 - `data/unmatched_counties.log` — FIPS of counties missing data, for QA.
 
 Counties whose scores derive from real Census/BLS/Opportunity Atlas data

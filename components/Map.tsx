@@ -68,26 +68,43 @@ export default function MapView({ scoredCounties, onCountyClick, focusFips }: Ma
     };
   }, []);
 
-  // Build a "case" expression: counties with data are colored by score, others dim grey.
+  // Score → color is a smooth teal gradient. Counties with no data get the
+  // neutral navy color. We do this by building a `match` from GEO_ID to score
+  // (with −1 as the "no data" sentinel), then a `case` that routes the
+  // sentinel to the no-data color and otherwise interpolates score → color.
   const fillPaint = useMemo<maplibregl.FillLayerSpecification['paint']>(() => {
-    const cases: unknown[] = [];
+    const NO_DATA = '#1a1a2e';
+    const scoreLookup: unknown[] = ['match', ['get', 'GEO_ID']];
     for (const c of scoredCounties) {
-      const geoId = `0500000US${c.fips}`;
-      cases.push(['==', ['get', 'GEO_ID'], geoId]);
-      const score = c.matchScore;
-      const color = score >= 70 ? '#00d4ff' : score >= 40 ? '#fbbf24' : '#ef4444';
-      cases.push(color);
+      scoreLookup.push(`0500000US${c.fips}`, c.matchScore);
     }
+    scoreLookup.push(-1); // default for unscored counties
+
+    const teal = [
+      'interpolate',
+      ['linear'],
+      scoreLookup,
+      0, '#0a1a1f',
+      20, '#0d2e35',
+      40, '#0e4a56',
+      55, '#0e6b7a',
+      70, '#00a3bf',
+      85, '#00d4ff',
+      100, '#00d4ff',
+    ];
+
+    const fillColor =
+      scoredCounties.length > 0
+        ? (['case', ['==', scoreLookup, -1], NO_DATA, teal] as unknown as string)
+        : NO_DATA;
+
     return {
-      'fill-color':
-        cases.length > 0
-          ? (['case', ...cases, '#1f2937'] as unknown as string)
-          : '#1f2937',
+      'fill-color': fillColor,
       'fill-opacity': [
         'case',
         ['boolean', ['feature-state', 'hover'], false],
-        0.85,
-        0.55,
+        0.9,
+        0.7,
       ],
     } as maplibregl.FillLayerSpecification['paint'];
   }, [scoredCounties]);
@@ -222,8 +239,8 @@ export default function MapView({ scoredCounties, onCountyClick, focusFips }: Ma
               id="county-line"
               type="line"
               paint={{
-                'line-color': 'rgba(255,255,255,0.1)',
-                'line-width': 0.5,
+                'line-color': 'rgba(255,255,255,0.08)',
+                'line-width': 0.4,
               }}
             />
           </Source>

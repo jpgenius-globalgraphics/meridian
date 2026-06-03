@@ -1,21 +1,22 @@
 """
-Merge fetched Census + BLS + Opportunity Atlas data and emit the final county
+Merge fetched Census + Opportunity Atlas data and emit the final county
 database consumed by the Next.js app.
 
 Inputs (run the other fetch_*.py scripts first):
-  data/raw/census_data.json
-  data/raw/bls_data.json
-  data/raw/opportunity_data.json
+  data/raw/census_data.json        (required)
+  data/raw/opportunity_data.json   (optional — poverty-rate proxy used if missing)
 
 Output:
   data/counties_generated.json   — final county objects in CountyData shape
   data/unmatched_counties.log    — fips with missing data, one per line
 
+Unemployment comes directly from the Census ACS-derived rate
+(B23025_005E unemployed / B23025_003E labor force) — BLS is not used because
+its public API is unreliable for large county-batched pulls.
+
 We keep only the top 800 counties by population (covers ~85% of US population)
 and compute the 5 dimension scores (0-100) and a composite matchScore. Lat/lng
-centroids are looked up from a built-in county centroid table (subset shipped
-in this script — full ~3,143 county table is generated from the Census Gazetteer
-file if available, but the script also degrades gracefully without it).
+centroids come from the Census 2023 county Gazetteer file (auto-downloaded).
 """
 
 from __future__ import annotations
@@ -36,10 +37,7 @@ OUT_PATH = ROOT / "data" / "counties_generated.json"
 UNMATCHED_LOG = ROOT / "data" / "unmatched_counties.log"
 
 CENSUS_PATH = RAW_DIR / "census_data.json"
-BLS_PATH = RAW_DIR / "bls_data.json"
 OPP_PATH = RAW_DIR / "opportunity_data.json"
-
-TOP_N_BY_POP = 800
 
 # Census Gazetteer 2023 — county-level centroids and state codes.
 GAZETTEER_URL = (
@@ -81,13 +79,12 @@ def ensure_gazetteer() -> pd.DataFrame:
     return df[["fips", "county_name", "state_abbr", "lat", "lng"]]
 
 
-def load_inputs() -> tuple[dict, dict, dict]:
+def load_inputs() -> tuple[dict, dict]:
     if not CENSUS_PATH.exists():
         raise SystemExit("Run fetch_census.py first")
     census = json.loads(CENSUS_PATH.read_text())
-    bls = json.loads(BLS_PATH.read_text()) if BLS_PATH.exists() else {}
     opp = json.loads(OPP_PATH.read_text()) if OPP_PATH.exists() else {}
-    return census, bls, opp
+    return census, opp
 
 
 # ─── Dimension scoring ───────────────────────────────────────────────────────
@@ -193,8 +190,8 @@ def why_description(name: str, state: str, scores: dict[str, float],
 # ─── Main ────────────────────────────────────────────────────────────────────
 
 def main() -> int:
-    census, bls, opp = load_inputs()
-    print(f"Loaded census={len(census)}, bls={len(bls)}, opportunity={len(opp)}")
+    census, opp = load_inputs()
+    print(f"Loaded census={len(census)}, opportunity={len(opp)}")
 
     # Gazetteer for lat/lng + state abbreviation
     try:
@@ -204,17 +201,9 @@ def main() -> int:
         print(f"WARNING: Gazetteer unavailable ({e}); centroids will be 0,0.", file=sys.stderr)
         gaz_by_fips = {}
 
-    # Build a frame of all counties with population, then pick the top N.
-    rows = []
-    for fips, rec in census.items():
-        pop = rec.get("population")
-        if pop is None:
-            continue
-        rows.append({**rec, "fips": fips})
-    df = pd.DataFrame(rows)
-    df = df.sort_values("population", ascending=False).head(TOP_N_BY_POP)
-    selected_fips = set(df["fips"].tolist())
-    print(f"Selected top {len(selected_fips)} counties by population")
+    # Include every county that has Census data.
+    selected_fips = {fips for fips, rec in census.items() if rec.get("population") is not None}
+    print(f"Scoring {len(selected_fips)} counties")
 
     # All mobility values (for percentile normalization)
     all_p25 = [v["mobility_p25"] for v in opp.values() if "mobility_p25" in v]
@@ -224,13 +213,10 @@ def main() -> int:
 
     for fips in selected_fips:
         rec = census[fips]
-        bls_rec = bls.get(fips, {})
         opp_rec = opp.get(fips, {})
 
-        # Prefer BLS unemployment over Census-derived (more current)
-        unemp = bls_rec.get("unemployment_rate")
-        if unemp is None:
-            unemp = rec.get("unemployment_rate")
+        # Unemployment derived from ACS (B23025_005E / B23025_003E)
+        unemp = rec.get("unemployment_rate")
 
         median_income = rec.get("median_income")
         median_home = rec.get("median_home_value")
